@@ -1,48 +1,27 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Request,
-  UseGuards,
-  UsePipes,
-} from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, UseGuards, UsePipes } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { z } from "zod";
-import { insertUserSchema } from "../db/schema.js";
+import { loginUserSchema, registerUserSchema } from "../db/schema.js";
 import { UsersService } from "../users/users.service.js";
 import { AuthService } from "./auth.service.js";
 import { ZodValidationPipe } from "./pipes/zod-validation.pipe.js";
 
-const loginUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
 
-type LoginUserDto = z.infer<typeof loginUserSchema>;
 
 @ApiTags("auth")
-@Controller("auth")
+@Controller()
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private usersService: UsersService,
+    private usersService: UsersService
   ) {}
 
   @Post("register")
-  @UsePipes(new ZodValidationPipe(insertUserSchema))
+  @UsePipes(new ZodValidationPipe(registerUserSchema))
   @ApiOperation({ summary: "Register a new user" })
   @ApiResponse({ status: 201, description: "User successfully created." })
-  async register(@Body() registerUserDto: z.infer<typeof insertUserSchema>) {
+  async register(@Body() registerUserDto: z.infer<typeof registerUserSchema>) {
     return this.usersService.create(registerUserDto);
   }
 
@@ -64,7 +43,8 @@ export class AuthController {
     status: 200,
     description: "Login successful, returns tokens.",
   })
-  async login(@Request() req, @Body() loginUserDto: LoginUserDto) {
+  async login(@Request() req) {
+    console.log("🚀 ~ AuthController ~ login ~ req.user:", req.user)
     // req.user is populated by the LocalStrategy guard
     return this.authService.login(req.user);
   }

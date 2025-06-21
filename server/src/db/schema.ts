@@ -1,33 +1,30 @@
-import {
-  boolean,
-  int,
-  mysqlTable,
-  primaryKey,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { boolean, int, mysqlTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull(),
-  emailVerified: timestamp("emailVerified", { mode: "date", fsp: 3 }),
+  emailVerified: boolean("emailVerified").notNull().default(false),
   image: varchar("image", { length: 255 }),
   hashedPassword: varchar("hashedPassword", { length: 255 }),
   hashedRefreshToken: varchar("hashedRefreshToken", { length: 255 }),
 });
 
 // Schema for inserting a user - can be used to validate API requests
-export const insertUserSchema = createInsertSchema(users, {
+export const registerUserSchema = z.object({
   email: z.string().email(),
-  // Add other validation rules here if needed
+  password: z.string().min(8),
 });
 
 // Schema for selecting a user - can be used to validate API responses
 export const selectUserSchema = createSelectSchema(users);
+
+export const loginUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
 
 export const accounts = mysqlTable(
   "accounts",
@@ -50,7 +47,7 @@ export const accounts = mysqlTable(
     compoundKey: primaryKey({
       columns: [account.provider, account.providerAccountId],
     }),
-  }),
+  })
 );
 
 export const sessions = mysqlTable("sessions", {
@@ -70,7 +67,7 @@ export const verificationTokens = mysqlTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  }),
+  })
 );
 
 export const authenticators = mysqlTable(
@@ -95,5 +92,5 @@ export const authenticators = mysqlTable(
     compositePK: primaryKey({
       columns: [authenticator.userId, authenticator.credentialID],
     }),
-  }),
+  })
 );
