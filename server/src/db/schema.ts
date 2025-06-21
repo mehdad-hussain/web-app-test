@@ -1,4 +1,6 @@
 import { boolean, int, mysqlTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
@@ -6,7 +8,18 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 255 }).notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date", fsp: 3 }),
   image: varchar("image", { length: 255 }),
+  hashedPassword: varchar("hashedPassword", { length: 255 }),
+  hashedRefreshToken: varchar("hashedRefreshToken", { length: 255 }),
 });
+
+// Schema for inserting a user - can be used to validate API requests
+export const insertUserSchema = createInsertSchema(users, {
+  email: z.string().email(),
+  // Add other validation rules here if needed
+});
+
+// Schema for selecting a user - can be used to validate API responses
+export const selectUserSchema = createSelectSchema(users);
 
 export const accounts = mysqlTable(
   "accounts",

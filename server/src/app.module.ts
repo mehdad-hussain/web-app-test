@@ -1,23 +1,13 @@
 import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { User } from "./entities/user.entity";
+import { AuthModule } from "./auth/auth.module";
+import { DrizzleModule } from "./drizzle/drizzle.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: "mysql",
-      host: "localhost",
-      port: 3306,
-      username: "docker",
-      password: "docker",
-      database: "test",
-      entities: [User],
-      synchronize: true,
-    }),
-    TypeOrmModule.forFeature([User]),
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UsersModule, DrizzleModule],
   controllers: [AppController],
   providers: [AppService],
 })
