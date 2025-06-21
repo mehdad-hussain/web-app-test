@@ -1,11 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, UseGuards, UsePipes } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Request,
+  UseGuards,
+  UsePipes,
+} from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { insertUserSchema } from "src/db/schema";
-import { UsersService } from "src/users/users.service";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { z } from "zod";
-import { AuthService } from "./auth.service";
-import { ZodValidationPipe } from "./pipes/zod-validation.pipe";
+import { insertUserSchema } from "../db/schema.js";
+import { UsersService } from "../users/users.service.js";
+import { AuthService } from "./auth.service.js";
+import { ZodValidationPipe } from "./pipes/zod-validation.pipe.js";
 
 const loginUserSchema = z.object({
   email: z.string().email(),
@@ -19,7 +35,7 @@ type LoginUserDto = z.infer<typeof loginUserSchema>;
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private usersService: UsersService
+    private usersService: UsersService,
   ) {}
 
   @Post("register")
@@ -44,7 +60,10 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 200, description: "Login successful, returns tokens." })
+  @ApiResponse({
+    status: 200,
+    description: "Login successful, returns tokens.",
+  })
   async login(@Request() req, @Body() loginUserDto: LoginUserDto) {
     // req.user is populated by the LocalStrategy guard
     return this.authService.login(req.user);
@@ -55,7 +74,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Refreshes the access token" })
   @ApiBearerAuth("jwt-refresh-token")
-  @ApiResponse({ status: 200, description: "Returns new access and refresh tokens." })
+  @ApiResponse({
+    status: 200,
+    description: "Returns new access and refresh tokens.",
+  })
   async refresh(@Request() req) {
     return this.authService.login(req.user);
   }

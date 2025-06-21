@@ -1,21 +1,21 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { AppService } from "./app.service.js";
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get('/api/getTest')
+  @Get("/api/getTest")
   getTest(@Query() query: any) {
     return query;
   }
 
-  @Post('/api/postTest')
+  @Post("/api/postTest")
   postTest(@Body() body: any) {
-    return { hello: 'world' };
+    return { hello: "world" };
   }
-  
-  @Get('/api/hello')
+
+  @Get("/api/hello")
   getHello() {
     return this.appService.getHello();
   }

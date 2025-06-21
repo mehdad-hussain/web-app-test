@@ -1,7 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
-import { UsersService } from "../users/users.service";
+import { env } from "../lib/env.js";
+import { UsersService } from "../users/users.service.js";
 
 @Injectable()
 export class AuthService {
@@ -34,15 +35,15 @@ export class AuthService {
       this.jwtService.signAsync(
         { sub: userId, email },
         {
-          secret: process.env.JWT_ACCESS_SECRET,
-          expiresIn: "15m",
+          secret: env.JWT_ACCESS_SECRET,
+          expiresIn: env.JWT_ACCESS_TOKEN_EXPIRES_IN,
         }
       ),
       this.jwtService.signAsync(
         { sub: userId, email },
         {
-          secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: "7d",
+          secret: env.JWT_REFRESH_SECRET,
+          expiresIn: env.JWT_REFRESH_TOKEN_EXPIRES_IN,
         }
       ),
     ]);

@@ -1,8 +1,9 @@
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import * as cors from "cors";
+import cors from "cors";
 import "dotenv/config";
-import { AppModule } from "./app.module";
+import { AppModule } from "./app.module.js";
+import { env } from "./lib/env.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,7 +11,7 @@ async function bootstrap() {
   // Middleware settings
   app.use(
     cors({
-      origin: "http://localhost:5173", // or your frontend origin
+      origin: env.CORS_ORIGIN,
       credentials: true,
     })
   );
@@ -23,7 +24,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api-docs", app, document);
 
-  await app.listen(3000);
-  console.log("Example app listening on port 3000!");
+  await app.listen(env.PORT);
+  console.log(`Example app listening on port ${env.PORT}!`);
 }
 bootstrap();
