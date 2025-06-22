@@ -26,6 +26,7 @@ module.exports = {
         message: "Please use `env` from `src/lib/env.js` instead of `process.env`.",
       },
     ],
+    "no-console": ["error", { allow: ["warn", "error"] }],
   },
   overrides: [
     {
