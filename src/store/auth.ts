@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { secureStorage } from '../lib/secure-storage'
 
 type User = {
   id: string
@@ -7,14 +8,15 @@ type User = {
   name: string | null
 }
 
-type AuthState = {
+export type AuthState = {
   user: User | null
   accessToken: string | null
-  refreshToken: string | null
+  status: 'idle' | 'loading' | 'authenticated' | 'unauthenticated' | 'session_expired'
   actions: {
-    setTokens: (tokens: { accessToken: string; refreshToken: string }) => void
+    setAccessToken: (tokens: { accessToken: string; status?: string }) => void
     setUser: (user: User) => void
     logout: () => void
+    setSessionExpired: () => void
   }
 }
 
@@ -23,27 +25,35 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
+      status: 'idle',
       actions: {
-        setTokens: (tokens) =>
-          set({
-            accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshToken,
+        setAccessToken: (tokens) =>
+          set({ 
+            accessToken: tokens.accessToken, 
+            status: tokens.status as AuthState['status'] || 'authenticated' 
           }),
-        setUser: (user) => set({ user }),
+        setUser: (user) => set((state) => ({ ...state, user })),
         logout: () =>
-          set({ user: null, accessToken: null, refreshToken: null }),
+          set({ user: null, accessToken: null, status: 'unauthenticated' }),
+        setSessionExpired: () =>
+          set({ user: null, accessToken: null, status: 'session_expired' }),
       },
     }),
     {
       name: 'auth-storage',
+      storage: createJSONStorage(() => secureStorage),
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
+        status: state.status,
       }),
-    },
-  ),
+      onRehydrateStorage: (state) => {
+        if (!state.accessToken) {
+          state.status = 'unauthenticated'
+        }
+      },
+    }
+  )
 )
 
 export const useAuthActions = () => useAuthStore((state) => state.actions)

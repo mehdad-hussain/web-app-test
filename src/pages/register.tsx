@@ -34,6 +34,7 @@ export default function RegisterPage() {
 
     const onSubmit = (values: z.infer<typeof formSchema>) => {
         registerMutation.mutate({
+            name: values.name,
             email: values.email,
             password: values.password,
         });

@@ -1,22 +1,30 @@
 import api from '@/lib/api'
 import { useAuthActions } from '@/store/auth'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export const useLogin = () => {
-  const { setTokens, setUser } = useAuthActions()
+  const { setAccessToken, setUser } = useAuthActions()
   const navigate = useNavigate()
+  const location = useLocation()
 
   return useMutation({
-    mutationFn: (data: any) => api.post('/login', data),
+    mutationFn: (data: any) => api.post('/auth/login', data),
     onSuccess: async (response: any) => {
       if (response && response.data) {
-        setTokens(response.data)
-        const userProfile = await api.get('/profile')
+        setAccessToken({ accessToken: response.data.accessToken })
+        const userProfile = await api.get('/auth/profile', {
+          headers: {
+            Authorization: `Bearer ${response.data.accessToken}`,
+          },
+        })
         setUser(userProfile.data)
         toast.success('Login successful!')
-        navigate('/')
+        
+        // Navigate to the intended destination or fallback to dashboard
+        const from = (location.state as any)?.from?.pathname || '/'
+        navigate(from, { replace: true })
       }
     },
     onError: (error: any) => {
