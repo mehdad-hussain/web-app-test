@@ -6,10 +6,12 @@ import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module.js";
 import { env } from "./lib/env.js";
 import { AllExceptionsFilter } from "./common/filters/http-exception.filter.js";
+import cookieParser from "cookie-parser";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
   app.useLogger(app.get(Logger));
+  app.use(cookieParser());
 
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));

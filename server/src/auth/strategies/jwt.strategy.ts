@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { env } from "../../lib/env.js";
@@ -13,12 +13,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
+  async validate(payload: any) {
     const user = await this.usersService.findOneById(payload.sub);
-    if (user) {
-      const { hashedPassword, hashedRefreshToken, ...result } = user;
-      return result;
+    if (!user) {
+      throw new UnauthorizedException();
     }
-    return null;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { hashedPassword, ...result } = user;
+    return result;
   }
 }

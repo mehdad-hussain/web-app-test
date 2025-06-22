@@ -37,18 +37,24 @@ CREATE TABLE `users` (
 	`id` varchar(255) NOT NULL,
 	`name` varchar(255),
 	`email` varchar(255) NOT NULL,
-	`emailVerified` timestamp(3),
+	`emailVerified` timestamp,
 	`image` varchar(255),
-	CONSTRAINT `users_id` PRIMARY KEY(`id`)
+	`hashedPassword` varchar(255),
+	CONSTRAINT `users_id` PRIMARY KEY(`id`),
+	CONSTRAINT `users_email_unique` UNIQUE(`email`)
 );
 --> statement-breakpoint
-CREATE TABLE `verificationToken` (
-	`identifier` varchar(255) NOT NULL,
+CREATE TABLE `verification_tokens` (
+	`id` varchar(255) NOT NULL,
 	`token` varchar(255) NOT NULL,
-	`expires` timestamp NOT NULL,
-	CONSTRAINT `verificationToken_identifier_token_pk` PRIMARY KEY(`identifier`,`token`)
+	`userId` varchar(255) NOT NULL,
+	`expiresAt` timestamp NOT NULL,
+	`used` boolean DEFAULT false,
+	CONSTRAINT `verification_tokens_id` PRIMARY KEY(`id`),
+	CONSTRAINT `verification_tokens_token_unique` UNIQUE(`token`)
 );
 --> statement-breakpoint
 ALTER TABLE `accounts` ADD CONSTRAINT `accounts_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `authenticator` ADD CONSTRAINT `authenticator_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `sessions` ADD CONSTRAINT `sessions_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;
+ALTER TABLE `sessions` ADD CONSTRAINT `sessions_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `verification_tokens` ADD CONSTRAINT `verification_tokens_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;

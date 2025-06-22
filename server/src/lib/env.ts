@@ -13,6 +13,8 @@ export const env = createEnv({
     PORT: z.coerce.number().default(4000),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     CORS_ORIGIN: z.string().url(),
+    RESEND_API_KEY: z.string().min(1),
+    MAIL_FROM: z.string().email(),
   },
   runtimeEnv: process.env,
   clientPrefix: "VITE_",

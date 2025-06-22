@@ -5,25 +5,33 @@ import { z } from "zod";
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 255 }).notNull().primaryKey(),
   name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 255 }).notNull(),
-  emailVerified: boolean("emailVerified").notNull().default(false),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: varchar("image", { length: 255 }),
   hashedPassword: varchar("hashedPassword", { length: 255 }),
-  hashedRefreshToken: varchar("hashedRefreshToken", { length: 255 }),
 });
 
-// Schema for inserting a user - can be used to validate API requests
-export const registerUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+export const insertUserSchema = z.object({
+  name: z
+    .string({ required_error: "Name is required." })
+    .min(1, { message: "Name is required." }),
+  email: z
+    .string({ required_error: "Email is required." })
+    .email({ message: "Invalid email address." }),
+  password: z
+    .string({ required_error: "Password is required." })
+    .min(8, { message: "Password must be at least 8 characters." }),
 });
 
-// Schema for selecting a user - can be used to validate API responses
 export const selectUserSchema = createSelectSchema(users);
 
 export const loginUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
+  email: z
+    .string({ required_error: "Email is required." })
+    .email({ message: "Please enter a valid email." }),
+  password: z
+    .string({ required_error: "Password is required." })
+    .min(1, { message: "Password is required." }),
 });
 
 export const accounts = mysqlTable(
@@ -58,17 +66,15 @@ export const sessions = mysqlTable("sessions", {
   expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
-export const verificationTokens = mysqlTable(
-  "verificationToken",
-  {
-    identifier: varchar("identifier", { length: 255 }).notNull(),
-    token: varchar("token", { length: 255 }).notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
-  },
-  (vt) => ({
-    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
-);
+export const verificationTokens = mysqlTable("verification_tokens", {
+  id: varchar("id", { length: 255 }).notNull().primaryKey(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expiresAt", { mode: "date" }).notNull(),
+  used: boolean("used").default(false),
+});
 
 export const authenticators = mysqlTable(
   "authenticator",

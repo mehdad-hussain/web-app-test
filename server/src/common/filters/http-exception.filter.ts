@@ -2,6 +2,7 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from
 import { HttpAdapterHost } from "@nestjs/core";
 import { Request, Response } from "express";
 import { env } from "../../lib/env.js";
+import { ThrottlerException } from '@nestjs/throttler';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -13,6 +14,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    // Handle rate limiting separately
+    if (exception instanceof ThrottlerException) {
+      const responseBody = {
+        statusCode: 429,
+        timestamp: new Date().toISOString(),
+        message: 'Too many requests'
+      };
+      httpAdapter.reply(response, responseBody, 429);
+      return;
+    }
+
     const httpStatus = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     let message: string | object = "Internal server error";
@@ -21,6 +33,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
       if (typeof exceptionResponse === "string") {
         message = exceptionResponse;
+      } else if (
+        typeof exceptionResponse === "object" &&
+        exceptionResponse !== null &&
+        "message" in exceptionResponse &&
+        typeof (exceptionResponse as any).message !== "string"
+      ) {
+        // Handle Zod validation error messages
+        const zodErrors = (exceptionResponse as any).message;
+        message = Object.values(zodErrors).flat().join("; ");
       } else if (typeof exceptionResponse === "object" && exceptionResponse !== null) {
         message = (exceptionResponse as any).message || exception.message;
       } else {
