@@ -1,18 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVerifyEmail } from "@/hooks/use-verify-email";
-import { AxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-
-interface ErrorResponse {
-    message: string;
-}
 
 export default function VerifyEmailPage() {
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
-    const { mutate, isPending, isSuccess, isError, error } = useVerifyEmail();
+    const { isSuccess, isError, error, mutate } = useVerifyEmail();
     const verificationSent = useRef(false);
     const [verificationState, setVerificationState] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
 
@@ -43,17 +38,27 @@ export default function VerifyEmailPage() {
                         </Button>
                     </div>
                 );
-            case 'error':
+            case 'error': {
+                 let displayMessage = "Failed to verify email. The link may have expired.";
+                 if(error?.response?.data?.message) {
+                     const { message } = error.response.data;
+                     if(typeof message === 'string') {
+                         displayMessage = message;
+                     } else if (typeof message === 'object') {
+                         displayMessage = Object.values(message).flat().join('. ');
+                     }
+                 }
                 return (
                     <div>
                         <p className="text-red-600 mb-4">
-                            {(error as AxiosError<ErrorResponse>)?.response?.data?.message || "Failed to verify email. The link may have expired."}
+                            {displayMessage}
                         </p>
                         <Button asChild>
                             <Link to="/login">Back to Login</Link>
                         </Button>
                     </div>
                 );
+            }
             case 'verifying':
                 return (
                     <div className="flex flex-col items-center gap-4">

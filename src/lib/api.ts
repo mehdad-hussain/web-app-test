@@ -2,6 +2,7 @@ import { env } from '@/lib/env'
 import { useAuthStore } from '@/store/auth'
 import axios, { type AxiosError } from 'axios'
 import { toast } from 'sonner'
+import { ApiErrorData } from './auth-types'
 
 const api = axios.create({
   baseURL: `${env.VITE_API_URL}/api/v1`,
@@ -31,27 +32,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-interface ErrorResponse {
-  message: string;
-  statusCode?: number;
-}
-
-// Custom error class for API errors
-export class APIError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public code?: string
-  ) {
-    super(message);
-    this.name = 'APIError';
-  }
-}
-
 // Response interceptor for handling errors
 api.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError<ErrorResponse>) => {
+  async (error: AxiosError<ApiErrorData>) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && originalRequest) {
@@ -99,7 +83,14 @@ api.interceptors.response.use(
 
     if (error.response) {
       const status = error.response.status;
-      const message = error.response.data?.message || 'An error occurred';
+      const data = error.response.data;
+      let message = 'An error occurred'
+
+      if (data && typeof data.message === 'string') {
+        message = data.message;
+      } else if (data && typeof data.message === 'object') {
+        message = Object.values(data.message).flat().join('. ');
+      }
 
       // Handle specific error cases
       switch (status) {
@@ -125,18 +116,18 @@ api.interceptors.response.use(
           }
       }
 
-      throw new APIError(message, status);
+      throw new Error(message)
     }
 
     if (error.request) {
       const message = 'No response from server. Please check your connection.';
       toast.error(message);
-      throw new APIError(message);
+      throw new Error(message);
     }
 
     // Something happened in setting up the request
     toast.error('Failed to make request. Please try again.');
-    throw new APIError(error.message || 'Unknown error occurred');
+    throw new Error(error.message || 'Unknown error occurred');
   },
 )
 

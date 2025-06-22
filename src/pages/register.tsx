@@ -3,16 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useRegister } from "@/hooks/use-register";
+import { registerSchema } from "@/lib/auth-types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 
-const formSchema = z
-    .object({
-        name: z.string().min(1, { message: "Name is required" }),
-        email: z.string().email({ message: "Invalid email address" }),
-        password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+const formSchema = registerSchema
+    .extend({
         confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -20,19 +18,22 @@ const formSchema = z
         path: ["confirmPassword"],
     });
 
+type RegisterFormData = z.infer<typeof formSchema>;
+
 export default function RegisterPage() {
     const registerMutation = useRegister();
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<RegisterFormData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            name: "",
             email: "",
             password: "",
             confirmPassword: "",
         },
     });
 
-    const onSubmit = (values: z.infer<typeof formSchema>) => {
+    const onSubmit = (values: RegisterFormData) => {
         registerMutation.mutate({
             name: values.name,
             email: values.email,

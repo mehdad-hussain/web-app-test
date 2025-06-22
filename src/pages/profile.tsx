@@ -1,7 +1,8 @@
-import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { UserProfile } from "@/lib/auth-types";
+import { useAuthStore } from "@/store/auth";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 export default function ProfilePage() {
@@ -11,7 +12,7 @@ export default function ProfilePage() {
     data: profile,
     isLoading,
     isError,
-  } = useQuery({
+  } = useQuery<UserProfile>({
     queryKey: ["profile"],
     queryFn: async () => {
       const response = await api.get("/auth/profile");

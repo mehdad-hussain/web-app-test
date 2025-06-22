@@ -1,20 +1,15 @@
+import { UserProfile } from '@/lib/auth-types'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { secureStorage } from '../lib/secure-storage'
 
-type User = {
-  id: string
-  email: string
-  name: string | null
-}
-
 export type AuthState = {
-  user: User | null
+  user: UserProfile | null
   accessToken: string | null
   status: 'idle' | 'loading' | 'authenticated' | 'unauthenticated' | 'session_expired'
   actions: {
     setAccessToken: (tokens: { accessToken: string; status?: string }) => void
-    setUser: (user: User) => void
+    setUser: (user: UserProfile) => void
     logout: () => void
     setSessionExpired: () => void
   }
