@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
-import { UsersService } from "./users.service.js";
-import { DrizzleModule } from "../drizzle/drizzle.module.js";
-import { MailModule } from "../mail/mail.module.js";
+import { DrizzleModule } from "../drizzle/drizzle.module";
+import { MailModule } from "../mail/mail.module";
+import { UsersService } from "./users.service";
 
 @Module({
   imports: [DrizzleModule, MailModule],

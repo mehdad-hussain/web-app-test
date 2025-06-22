@@ -1,15 +1,15 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { LoggerModule } from "nestjs-pino";
-import { AppController } from "./app.controller.js";
-import { AppService } from "./app.service.js";
-import { AuthModule } from "./auth/auth.module.js";
-import { DrizzleModule } from "./drizzle/drizzle.module.js";
-import { env } from "./lib/env.js";
-import { UsersModule } from "./users/users.module.js";
-import { MailModule } from "./mail/mail.module.js";
-import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { LoggerModule } from "nestjs-pino";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { AuthModule } from "./auth/auth.module";
+import { DrizzleModule } from "./drizzle/drizzle.module";
+import { env } from "./lib/env";
+import { MailModule } from "./mail/mail.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
   imports: [

@@ -1,9 +1,9 @@
 import { FactoryProvider } from "@nestjs/common";
 import { drizzle } from "drizzle-orm/mysql2";
 import { createPool } from "mysql2/promise";
-import * as schema from "../db/schema.js";
-import { env } from "../lib/env.js";
-import { DRIZZLE_ORM } from "./constants.js";
+import * as schema from "../db/schema";
+import { env } from "../lib/env";
+import { DRIZZLE_ORM } from "./constants";
 
 export const drizzleProvider: FactoryProvider = {
   provide: DRIZZLE_ORM,

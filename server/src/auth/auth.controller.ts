@@ -1,15 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, Res, UseGuards, UsePipes, Query } from "@nestjs/common";
-import { z } from "zod";
-import { loginUserSchema, insertUserSchema } from "../db/schema.js";
-import { UsersService } from "../users/users.service.js";
-import { AuthService } from "./auth.service.js";
-import { ZodValidationPipe } from "./pipes/zod-validation.pipe.js";
-import { Response } from "express";
-import { env } from "../lib/env.js";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Request, Res, UseGuards, UsePipes } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import { AccessTokenGuard } from "../common/guards/accessToken.guard.js";
-import { RefreshTokenGuard } from "../common/guards/refreshToken.guard.js";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { Response } from "express";
+import { z } from "zod";
+import { AccessTokenGuard } from "../common/guards/accessToken.guard";
+import { RefreshTokenGuard } from "../common/guards/refreshToken.guard";
+import { insertUserSchema, loginUserSchema } from "../db/schema";
+import { env } from "../lib/env";
+import { UsersService } from "../users/users.service";
+import { AuthService } from "./auth.service";
+import { ZodValidationPipe } from "./pipes/zod-validation.pipe";
 
 @ApiTags("auth")
 @Controller("auth")

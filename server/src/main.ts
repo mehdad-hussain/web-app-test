@@ -1,12 +1,12 @@
 import { HttpAdapterHost, NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import cors from "cors";
+import * as cookieParser from "cookie-parser";
+import * as cors from "cors";
 import "dotenv/config";
 import { Logger } from "nestjs-pino";
-import { AppModule } from "./app.module.js";
-import { env } from "./lib/env.js";
-import { AllExceptionsFilter } from "./common/filters/http-exception.filter.js";
-import cookieParser from "cookie-parser";
+import { AppModule } from "./app.module";
+import { AllExceptionsFilter } from "./common/filters/http-exception.filter";
+import { env } from "./lib/env";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: false });

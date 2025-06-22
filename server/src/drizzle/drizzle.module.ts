@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { DRIZZLE_ORM } from "./constants.js";
-import { drizzleProvider } from "./drizzle.provider.js";
+import { DRIZZLE_ORM } from "./constants";
+import { drizzleProvider } from "./drizzle.provider";
 
 @Module({
   providers: [drizzleProvider],

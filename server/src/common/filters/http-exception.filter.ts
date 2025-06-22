@@ -2,7 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import { HttpAdapterHost } from "@nestjs/core";
 import { ThrottlerException } from '@nestjs/throttler';
 import { Request, Response } from "express";
-import { env } from "../../lib/env.js";
+import { env } from "../../lib/env";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

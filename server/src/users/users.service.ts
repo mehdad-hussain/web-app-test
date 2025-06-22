@@ -1,14 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
-import * as argon2 from "argon2";
 import { createId } from "@paralleldrive/cuid2";
+import * as argon2 from "argon2";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
-import { insertUserSchema, users, verificationTokens } from "../db/schema.js";
-import { User } from "../entities/user.entity.js";
-import { MailService } from "../mail/mail.service.js";
-import { DRIZZLE_ORM } from "../drizzle/constants.js";
 import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../db/schema.js";
+import { z } from "zod";
+import * as schema from "../db/schema";
+import { insertUserSchema, users, verificationTokens } from "../db/schema";
+import { DRIZZLE_ORM } from "../drizzle/constants";
+import { User } from "../entities/user.entity";
+import { MailService } from "../mail/mail.service";
 
 @Injectable()
 export class UsersService {

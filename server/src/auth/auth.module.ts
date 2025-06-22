@@ -1,12 +1,12 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
-import { DrizzleModule } from "../drizzle/drizzle.module.js";
-import { UsersModule } from "../users/users.module.js";
-import { AuthController } from "./auth.controller.js";
-import { AuthService } from "./auth.service.js";
-import { RefreshTokenStrategy } from "./strategies/jwt-refresh.strategy.js";
-import { JwtStrategy } from "./strategies/jwt.strategy.js";
-import { LocalStrategy } from "./strategies/local.strategy.js";
+import { DrizzleModule } from "../drizzle/drizzle.module";
+import { UsersModule } from "../users/users.module";
+import { AuthController } from "./auth.controller";
+import { AuthService } from "./auth.service";
+import { RefreshTokenStrategy } from "./strategies/jwt-refresh.strategy";
+import { JwtStrategy } from "./strategies/jwt.strategy";
+import { LocalStrategy } from "./strategies/local.strategy";
 
 @Module({
   imports: [

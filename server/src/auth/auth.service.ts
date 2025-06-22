@@ -1,15 +1,14 @@
 import { ForbiddenException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "../entities/user.entity.js";
-import { env } from "../lib/env.js";
-import { UsersService } from "../users/users.service.js";
+import * as argon2 from "argon2";
 import { eq } from "drizzle-orm";
-import { verificationTokens } from "../db/schema.js";
-import { DRIZZLE_ORM } from "../drizzle/constants.js";
 import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../db/schema.js";
-import argon2 from "argon2";
-import { sessions } from "../db/schema.js";
+import * as schema from "../db/schema";
+import { sessions, verificationTokens } from "../db/schema";
+import { DRIZZLE_ORM } from "../drizzle/constants";
+import { User } from "../entities/user.entity";
+import { env } from "../lib/env";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class AuthService {

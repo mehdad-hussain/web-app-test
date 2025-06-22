@@ -1,15 +1,15 @@
-import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PassportStrategy } from '@nestjs/passport';
+import argon2 from 'argon2';
+import { eq } from 'drizzle-orm';
+import { MySql2Database } from 'drizzle-orm/mysql2';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
-import { env } from '../../lib/env.js';
-import { DRIZZLE_ORM } from '../../drizzle/constants.js';
-import { MySql2Database } from 'drizzle-orm/mysql2';
-import * as schema from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
-import { sessions } from '../../db/schema.js';
-import argon2 from 'argon2';
-import { JwtService } from '@nestjs/jwt';
+import * as schema from '../../db/schema';
+import { sessions } from '../../db/schema';
+import { DRIZZLE_ORM } from '../../drizzle/constants';
+import { env } from '../../lib/env';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
