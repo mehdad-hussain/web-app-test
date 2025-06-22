@@ -131,4 +131,13 @@ api.interceptors.response.use(
   },
 )
 
+export const logout = async () => {
+  try {
+    await api.post('/auth/logout');
+  } catch (error) {
+    // The interceptor already handles errors and shows toasts, so we can ignore them here
+    console.error("Logout failed:", error);
+  }
+};
+
 export default api
