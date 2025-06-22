@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import {
   createBrowserRouter,
   RouterProvider,
-  Navigate,
 } from "react-router-dom";
 import './index.css'
 import LoginPage from './pages/login'
@@ -12,7 +11,6 @@ import VerifyEmailPage from './pages/verify-email'
 import { Toaster } from './components/ui/sonner'
 import { ErrorBoundary } from './components/ui/error-boundary'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import App from './App';
 import DashboardPage from './pages/dashboard';
 import ProfilePage from './pages/profile';
 import ProtectedRoute from './components/ProtectedRoute';

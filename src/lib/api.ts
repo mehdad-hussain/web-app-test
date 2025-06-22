@@ -1,6 +1,6 @@
 import { env } from '@/lib/env'
 import { useAuthStore } from '@/store/auth'
-import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
+import axios, { type AxiosError } from 'axios'
 import { toast } from 'sonner'
 
 const api = axios.create({
@@ -17,9 +17,9 @@ api.interceptors.request.use((config) => {
 })
 
 let isRefreshing = false;
-let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: any) => void; }[] = [];
+let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: unknown) => void; }[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
@@ -83,7 +83,7 @@ api.interceptors.response.use(
         }
         processQueue(null, data.accessToken);
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: unknown) {
         const axiosError = refreshError as AxiosError<{ message: string }>;
         if (axiosError.response?.data?.message === "Your session has expired. Please log in again.") {
           toast.error(axiosError.response.data.message);

@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVerifyEmail } from "@/hooks/use-verify-email";
+import { AxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { AxiosError } from "axios";
 
 interface ErrorResponse {
     message: string;

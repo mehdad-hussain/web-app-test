@@ -30,9 +30,7 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
     const refreshToken = req?.cookies?.refresh_token;
 
     if (!refreshToken) {
-      console.log('[RefreshTokenStrategy.validate] No refresh token found', {
-        timestamp: new Date().toISOString()
-      });
+
       throw new UnauthorizedException('Session expired. Please log in again.');
     }
 
@@ -42,10 +40,6 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
         secret: env.JWT_REFRESH_SECRET
       });
     } catch (error) {
-      console.log('[RefreshTokenStrategy.validate] JWT token expired', {
-        timestamp: new Date().toISOString(),
-        userId: payload.sub
-      });
       // Clean up any sessions for this user
       await this.db.delete(sessions).where(eq(sessions.userId, payload.sub));
       throw new UnauthorizedException('Session expired. Please log in again.');
@@ -54,12 +48,6 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
     // Get all sessions for this user
     const userSessions = await this.db.query.sessions.findMany({
       where: eq(sessions.userId, payload.sub),
-    });
-
-    console.log('[RefreshTokenStrategy.validate] Found user sessions', {
-      timestamp: new Date().toISOString(),
-      userId: payload.sub,
-      sessionCount: userSessions.length
     });
 
     if (!userSessions.length) {
@@ -77,10 +65,6 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
     }
 
     if (!matchedSession) {
-      console.log('[RefreshTokenStrategy.validate] No matching session found', {
-        timestamp: new Date().toISOString(),
-        userId: payload.sub
-      });
       throw new UnauthorizedException('Session expired. Please log in again.');
     }
 
@@ -88,18 +72,7 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
     const expiryDate = new Date(matchedSession.expires);
     const now = new Date();
 
-    console.log('[RefreshTokenStrategy.validate] Checking session expiration', {
-      timestamp: now.toISOString(),
-      userId: payload.sub,
-      sessionExpiry: expiryDate.toISOString(),
-      isExpired: now > expiryDate
-    });
-
     if (now > expiryDate) {
-      console.log('[RefreshTokenStrategy.validate] Session expired in DB', {
-        timestamp: now.toISOString(),
-        userId: payload.sub
-      });
       // Clean up expired session
       await this.db.delete(sessions).where(eq(sessions.sessionToken, matchedSession.sessionToken as string));
       throw new UnauthorizedException('Session expired. Please log in again.');

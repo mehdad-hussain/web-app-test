@@ -7,7 +7,7 @@ module.exports = {
     'plugin:react-hooks/recommended',
     'prettier',
   ],
-  ignorePatterns: ['dist', '.eslintrc.js', 'vite.config.ts'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'vite.config.ts'],
   parser: '@typescript-eslint/parser',
   plugins: ['react-refresh'],
   rules: {
@@ -25,6 +25,8 @@ module.exports = {
           'Please use `env` from `src/lib/env.ts` instead of `import.meta.env`.',
       },
     ],
+    'no-console': ['error', { allow: ['warn', 'error'] }],
+    'no-multiple-empty-lines': ['error', { 'max': 1, 'maxEOF': 0, 'maxBOF': 0 }],
   },
   overrides: [
     {
@@ -34,4 +36,4 @@ module.exports = {
       },
     },
   ],
-}
+}; 

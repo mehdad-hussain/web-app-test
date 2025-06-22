@@ -8,6 +8,7 @@
     "build": "vite build",
     "start": "vite preview",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore .",
+    "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore . --fix",
     "test": "jest"
   },
   "dependencies": {
