@@ -9,6 +9,7 @@ import { AuthModule } from "./auth/auth.module";
 import { DrizzleModule } from "./drizzle/drizzle.module";
 import { env } from "./lib/env";
 import { MailModule } from "./mail/mail.module";
+import { MurmursModule } from "./murmurs/murmurs.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -89,6 +90,7 @@ import { UsersModule } from "./users/users.module";
     UsersModule,
     AuthModule,
     MailModule,
+    MurmursModule,
   ],
   controllers: [AppController],
   providers: [

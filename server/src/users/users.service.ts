@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { createId } from "@paralleldrive/cuid2";
 import * as argon2 from "argon2";
 import { eq } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import { insertUserSchema, users, verificationTokens } from "../db/schema";
@@ -20,7 +20,7 @@ export class UsersService {
   async create(createUserDto: z.infer<typeof insertUserSchema>) {
     const { password, name, email } = createUserDto;
     const hashedPassword = await argon2.hash(password);
-    const userId = createId();
+    const userId = nanoid();
 
     const newUser = {
       id: userId,
@@ -36,11 +36,11 @@ export class UsersService {
       .from(users)
       .where(eq(users.id, userId));
 
-    const token = createId();
+    const token = nanoid();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
     await this.db.insert(verificationTokens).values({
-      id: createId(),
+      id: nanoid(),
       token,
       userId: createdUser.id,
       expiresAt,
