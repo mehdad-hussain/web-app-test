@@ -84,7 +84,7 @@ export class AuthController {
         }
       } catch (error) {
         // If token is invalid, just clear the cookie
-        console.log('Invalid refresh token during logout');
+        console.warn('Invalid refresh token during logout');
       }
     }
     response.clearCookie("refresh_token");
