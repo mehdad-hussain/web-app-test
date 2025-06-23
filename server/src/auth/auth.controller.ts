@@ -1,4 +1,5 @@
 import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Request, Res, UseGuards, UsePipes } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import { AuthGuard } from "@nestjs/passport";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Response } from "express";
@@ -16,7 +17,8 @@ import { ZodValidationPipe } from "./pipes/zod-validation.pipe";
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private jwtService: JwtService
   ) {}
 
   @Post("register")
@@ -67,16 +69,23 @@ export class AuthController {
     return { accessToken };
   }
 
-  @UseGuards(AccessTokenGuard)
   @Post("logout")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Logs the user out" })
-  @ApiBearerAuth("jwt")
   @ApiResponse({ status: 200, description: "Logout successful." })
   async logout(@Request() req, @Res({ passthrough: true }) response: Response) {
     const refreshToken = req.cookies?.refresh_token;
     if (refreshToken) {
-      await this.authService.logout(req.user.sub, refreshToken);
+      try {
+        // Decode the refresh token to get user ID
+        const decoded = this.jwtService.decode(refreshToken) as { sub: string };
+        if (decoded?.sub) {
+          await this.authService.logout(decoded.sub, refreshToken);
+        }
+      } catch (error) {
+        // If token is invalid, just clear the cookie
+        console.log('Invalid refresh token during logout');
+      }
     }
     response.clearCookie("refresh_token");
     return { message: "Logout successful" };
