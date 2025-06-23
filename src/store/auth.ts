@@ -1,7 +1,6 @@
 import { UserProfile } from '@/lib/auth-types'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { logout as apiLogout } from '../lib/api'
 import { secureStorage } from '../lib/secure-storage'
 
 export type AuthState = {
@@ -29,8 +28,7 @@ export const useAuthStore = create<AuthState>()(
             status: tokens.status as AuthState['status'] || 'authenticated' 
           }),
         setUser: (user) => set((state) => ({ ...state, user })),
-        logout: async () => {
-          await apiLogout()
+        logout: () => {
           set({ user: null, accessToken: null, status: 'unauthenticated' })
         },
         setSessionExpired: () =>

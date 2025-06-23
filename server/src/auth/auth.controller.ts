@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Request, Res, UseGuards, UsePipes } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Request, Res, UseGuards, UsePipes } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Response } from "express";
@@ -54,7 +54,7 @@ export class AuthController {
     description: "Login successful, returns tokens.",
   })
   async login(@Request() req, @Res({ passthrough: true }) response: Response) {
-    const tokens = await this.authService.login(req.user);
+    const tokens = await this.authService.login(req.user, req);
 
     const expires = new Date(Date.now() + 1 * 60 * 1000); // For testing: 1 minute
 
@@ -78,7 +78,7 @@ export class AuthController {
   async logout(@Request() req, @Res({ passthrough: true }) response: Response) {
     const refreshToken = req.cookies?.refresh_token;
     if (refreshToken) {
-      await this.authService.logout(refreshToken);
+      await this.authService.logout(req.user.sub, refreshToken);
     }
     response.clearCookie("refresh_token");
     return { message: "Logout successful" };
@@ -126,5 +126,28 @@ export class AuthController {
   @ApiResponse({ status: 200, description: "Returns a list of active sessions." })
   async getSessions(@Request() req) {
     return this.authService.getSessions(req.user.sub);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Post("sessions/revoke")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Revokes a specific session" })
+  @ApiBody({
+      schema: {
+        type: "object",
+        properties: {
+          sessionToken: { type: "string" },
+        },
+        required: ['sessionToken'],
+      },
+  })
+  @ApiBearerAuth("jwt")
+  @ApiResponse({ status: 200, description: "Session revoked successfully." })
+  async revokeSession(@Request() req, @Body('sessionToken') sessionToken: string) {
+      if (!sessionToken) {
+          throw new BadRequestException('sessionToken is required.');
+      }
+      await this.authService.revokeSession(req.user.sub, sessionToken);
+      return { message: "Session revoked successfully" };
   }
 }

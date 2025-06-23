@@ -1,8 +1,9 @@
 import { ForbiddenException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
+import { Request } from 'express';
 import * as schema from "../db/schema";
 import { sessions, verificationTokens } from "../db/schema";
 import { DRIZZLE_ORM } from "../drizzle/constants";
@@ -63,47 +64,77 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User) {
+  async login(user: User, req: Request) {
     const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    const deviceInfo = req.headers['user-agent'] ?? 'Unknown';
+    const ipAddress = req.ip;
+    await this.createSession(user.id, tokens.refreshToken, deviceInfo, ipAddress);
     return tokens;
   }
 
-  async logout(refreshToken: string) {
-    const allSessions = await this.db.query.sessions.findMany();
-    let hashedTokenToDelete: string | null = null;
+  async logout(userId: string, refreshToken: string) {
+    const userSessions = await this.db.query.sessions.findMany({
+      where: eq(sessions.userId, userId),
+    });
 
-    for (const session of allSessions) {
+    let sessionToDeactivate: (typeof schema.sessions.$inferSelect) | null = null;
+    for (const session of userSessions) {
       const isMatch = await argon2.verify(session.sessionToken as string, refreshToken);
       if (isMatch) {
-        hashedTokenToDelete = session.sessionToken as string;
+        sessionToDeactivate = session;
         break;
       }
     }
 
-    if (hashedTokenToDelete) {
-      await this.db.delete(sessions).where(eq(sessions.sessionToken, hashedTokenToDelete));
+    if (sessionToDeactivate) {
+      await this.db
+        .update(sessions)
+        .set({ isActive: false })
+        .where(eq(sessions.sessionToken, sessionToDeactivate.sessionToken as string));
     }
   }
 
   async logoutAll(userId: string) {
-    await this.db.delete(sessions).where(eq(sessions.userId, userId));
+    await this.db
+      .update(sessions)
+      .set({ isActive: false })
+      .where(eq(sessions.userId, userId));
   }
 
   async getSessions(userId: string) {
     return this.db.query.sessions.findMany({
-      where: eq(sessions.userId, userId),
+      where: and(eq(sessions.userId, userId), eq(sessions.isActive, true)),
       columns: {
-        sessionToken: true, // This is the hashed token
+        sessionToken: true,
+        deviceInfo: true,
+        ipAddress: true,
+        lastUsed: true,
         expires: true,
+        isActive: true,
       }
     });
+  }
+
+  async revokeSession(userId: string, sessionToken: string) {
+    const [session] = await this.db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.sessionToken, sessionToken), eq(sessions.userId, userId)));
+
+    if (!session) {
+      throw new ForbiddenException("Session not found or you don't have permission to revoke it.");
+    }
+    
+    await this.db
+      .update(sessions)
+      .set({ isActive: false })
+      .where(eq(sessions.sessionToken, sessionToken));
   }
 
   async refreshTokens(userId: string, refreshToken: string, email: string) {
 
     const allUserSessions = await this.db.query.sessions.findMany({
-      where: eq(sessions.userId, userId),
+      where: and(eq(sessions.userId, userId), eq(sessions.isActive, true)),
     });
 
     if (!allUserSessions.length) {
@@ -130,15 +161,17 @@ export class AuthService {
 
     if (now > expiryDate) {
 
-      await this.db.delete(sessions).where(eq(sessions.sessionToken, matchedSession.sessionToken as string));
+      await this.db.update(sessions).set({ isActive: false }).where(eq(sessions.sessionToken, matchedSession.sessionToken as string));
       throw new ForbiddenException("Your session has expired. Please log in again.");
     }
+
+    await this.db.update(sessions).set({ lastUsed: new Date() }).where(eq(sessions.sessionToken, matchedSession.sessionToken as string));
 
     const accessToken = await this.getAccessToken(userId, email);
     return { accessToken, status: 'authenticated' };
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string) {
+  async createSession(userId: string, refreshToken: string, deviceInfo: string, ipAddress: string) {
     const hashedRefreshToken = await argon2.hash(refreshToken);
     const expires = new Date();
     expires.setMinutes(expires.getMinutes() + 1); // For testing: 1 minute
@@ -147,6 +180,8 @@ export class AuthService {
       userId,
       sessionToken: hashedRefreshToken,
       expires,
+      deviceInfo,
+      ipAddress,
     });
   }
 

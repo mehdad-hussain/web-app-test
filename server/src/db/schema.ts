@@ -64,6 +64,10 @@ export const sessions = mysqlTable("sessions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
+  deviceInfo: varchar("deviceInfo", { length: 255 }),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  lastUsed: timestamp("lastUsed", { mode: "date" }).notNull().defaultNow(),
+  isActive: boolean("isActive").notNull().default(true),
 });
 
 export const verificationTokens = mysqlTable("verification_tokens", {

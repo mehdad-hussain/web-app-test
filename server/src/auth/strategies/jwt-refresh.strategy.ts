@@ -15,7 +15,6 @@ import { env } from '../../lib/env';
 export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
     @Inject(DRIZZLE_ORM) private db: MySql2Database<typeof schema>,
-    private jwtService: JwtService
   ) {
     super({
       jwtFromRequest: (req: Request) => {
@@ -36,7 +35,8 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
 
     // First verify if the JWT itself is expired
     try {
-      await this.jwtService.verifyAsync(refreshToken, {
+      const jwtService = new JwtService({});
+      await jwtService.verifyAsync(refreshToken, {
         secret: env.JWT_REFRESH_SECRET
       });
     } catch (error) {
@@ -66,6 +66,10 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
 
     if (!matchedSession) {
       throw new UnauthorizedException('Session expired. Please log in again.');
+    }
+
+    if (!matchedSession.isActive) {
+      throw new UnauthorizedException('Session is not active. Please log in again.');
     }
 
     // Check DB session expiration
