@@ -65,11 +65,11 @@ export class AuthService {
   }
 
   async login(user: User, req: Request) {
-    const tokens = await this.getTokens(user.id, user.email);
+    const { accessToken, refreshToken, expires } = await this.getTokens(user.id, user.email);
     const deviceInfo = req.headers['user-agent'] ?? 'Unknown';
     const ipAddress = req.ip;
-    await this.createSession(user.id, tokens.refreshToken, deviceInfo, ipAddress);
-    return tokens;
+    await this.createSession(user.id, refreshToken, deviceInfo, ipAddress, expires);
+    return { accessToken, refreshToken };
   }
 
   async logout(userId: string, refreshToken: string) {
@@ -131,6 +131,27 @@ export class AuthService {
       .where(eq(sessions.sessionToken, sessionToken));
   }
 
+  async getCurrentSession(userId: string, refreshToken: string) {
+    const userSessions = await this.db.query.sessions.findMany({
+      where: and(eq(sessions.userId, userId), eq(sessions.isActive, true)),
+    });
+
+    if (!userSessions.length) {
+      throw new ForbiddenException('No active sessions found.');
+    }
+
+    for (const session of userSessions) {
+      const isMatch = await argon2.verify(session.sessionToken as string, refreshToken);
+      if (isMatch) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { sessionToken, ...sessionDetails } = session;
+        return sessionDetails;
+      }
+    }
+
+    throw new UnauthorizedException('Session not found.');
+  }
+
   async refreshTokens(userId: string, refreshToken: string, email: string) {
 
     const allUserSessions = await this.db.query.sessions.findMany({
@@ -171,10 +192,8 @@ export class AuthService {
     return { accessToken, status: 'authenticated' };
   }
 
-  async createSession(userId: string, refreshToken: string, deviceInfo: string, ipAddress: string) {
+  async createSession(userId: string, refreshToken: string, deviceInfo: string, ipAddress: string, expires: Date) {
     const hashedRefreshToken = await argon2.hash(refreshToken);
-    const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 1); // For testing: 1 minute
 
     await this.db.insert(sessions).values({
       userId,
@@ -191,7 +210,7 @@ export class AuthService {
       { sub: userId, email },
       {
         secret: env.JWT_ACCESS_SECRET,
-        expiresIn: '30s', // For testing
+        expiresIn: env.JWT_ACCESS_TOKEN_EXPIRES_IN,
       },
     );
   }
@@ -204,14 +223,18 @@ export class AuthService {
         { sub: userId, email },
         {
           secret: env.JWT_REFRESH_SECRET,
-          expiresIn: '1m', // For testing
+          expiresIn: env.JWT_REFRESH_TOKEN_EXPIRES_IN,
         },
       ),
     ]);
 
+    const decodedRefreshToken = this.jwtService.decode(refreshToken) as { exp: number; };
+    const expires = new Date(decodedRefreshToken.exp * 1000);
+
     return {
       accessToken,
       refreshToken,
+      expires,
     };
   }
 }
