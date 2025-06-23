@@ -1,7 +1,7 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import argon2 from 'argon2';
+import * as argon2 from 'argon2';
 import { eq } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 import { Request } from 'express';
@@ -15,6 +15,7 @@ import { env } from '../../lib/env';
 export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
     @Inject(DRIZZLE_ORM) private db: MySql2Database<typeof schema>,
+    private jwtService: JwtService
   ) {
     super({
       jwtFromRequest: (req: Request) => {
@@ -35,8 +36,7 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
 
     // First verify if the JWT itself is expired
     try {
-      const jwtService = new JwtService({});
-      await jwtService.verifyAsync(refreshToken, {
+      await this.jwtService.verifyAsync(refreshToken, {
         secret: env.JWT_REFRESH_SECRET
       });
     } catch (error) {

@@ -140,4 +140,9 @@ export const logout = async () => {
   }
 };
 
+export const getCurrentSession = async () => {
+  const { data } = await api.get('/auth/sessions');
+  return data;
+}
+
 export default api

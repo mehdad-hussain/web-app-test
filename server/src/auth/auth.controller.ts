@@ -54,11 +54,9 @@ export class AuthController {
     description: "Login successful, returns tokens.",
   })
   async login(@Request() req, @Res({ passthrough: true }) response: Response) {
-    const tokens = await this.authService.login(req.user, req);
+    const { accessToken, refreshToken, expires } = await this.authService.login(req.user, req);
 
-    const expires = new Date(Date.now() + 1 * 60 * 1000); // For testing: 1 minute
-
-    response.cookie("refresh_token", tokens.refreshToken, {
+    response.cookie("refresh_token", refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV !== "development",
       sameSite: "strict",
@@ -66,7 +64,7 @@ export class AuthController {
       expires,
     });
 
-    return { accessToken: tokens.accessToken };
+    return { accessToken };
   }
 
   @UseGuards(AccessTokenGuard)
@@ -119,13 +117,14 @@ export class AuthController {
     return req.user;
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(RefreshTokenGuard)
   @Get("sessions")
   @ApiOperation({ summary: "Gets all active sessions for the user" })
-  @ApiBearerAuth("jwt")
+  @ApiBearerAuth("jwt-refresh")
   @ApiResponse({ status: 200, description: "Returns a list of active sessions." })
   async getSessions(@Request() req) {
-    return this.authService.getSessions(req.user.sub);
+    const { sub, refreshToken } = req.user;
+    return this.authService.getCurrentSession(sub, refreshToken);
   }
 
   @UseGuards(AccessTokenGuard)

@@ -1,7 +1,7 @@
 import { ForbiddenException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import { Request } from 'express';
 import * as schema from "../db/schema";
@@ -69,7 +69,7 @@ export class AuthService {
     const deviceInfo = req.headers['user-agent'] ?? 'Unknown';
     const ipAddress = req.ip;
     await this.createSession(user.id, refreshToken, deviceInfo, ipAddress, expires);
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, expires };
   }
 
   async logout(userId: string, refreshToken: string) {
@@ -101,20 +101,6 @@ export class AuthService {
       .where(eq(sessions.userId, userId));
   }
 
-  async getSessions(userId: string) {
-    return this.db.query.sessions.findMany({
-      where: and(eq(sessions.userId, userId), eq(sessions.isActive, true)),
-      columns: {
-        sessionToken: true,
-        deviceInfo: true,
-        ipAddress: true,
-        lastUsed: true,
-        expires: true,
-        isActive: true,
-      }
-    });
-  }
-
   async revokeSession(userId: string, sessionToken: string) {
     const [session] = await this.db
       .select()
@@ -133,23 +119,37 @@ export class AuthService {
 
   async getCurrentSession(userId: string, refreshToken: string) {
     const userSessions = await this.db.query.sessions.findMany({
-      where: and(eq(sessions.userId, userId), eq(sessions.isActive, true)),
+      where: and(
+        eq(sessions.userId, userId), 
+        eq(sessions.isActive, true),
+        gt(sessions.expires, new Date())
+      ),
     });
 
     if (!userSessions.length) {
       throw new ForbiddenException('No active sessions found.');
     }
 
+    let currentSession: (typeof schema.sessions.$inferSelect) | null = null;
+    const otherSessions: (typeof schema.sessions.$inferSelect)[] = [];
+
     for (const session of userSessions) {
       const isMatch = await argon2.verify(session.sessionToken as string, refreshToken);
       if (isMatch) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { sessionToken, ...sessionDetails } = session;
-        return sessionDetails;
+        currentSession = session;
+      } else {
+        otherSessions.push(session);
       }
     }
 
-    throw new UnauthorizedException('Session not found.');
+    if (!currentSession) {
+      throw new UnauthorizedException('Session not found.');
+    }
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { sessionToken, ...currentSessionDetails } = currentSession;
+    
+    return { currentSession: currentSessionDetails, otherSessions };
   }
 
   async refreshTokens(userId: string, refreshToken: string, email: string) {
