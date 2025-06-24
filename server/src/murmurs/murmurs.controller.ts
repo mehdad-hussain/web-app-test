@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../auth/pipes/zod-validation.pipe';
 import { AccessTokenGuard } from '../common/guards/accessToken.guard';
@@ -8,6 +8,7 @@ import { CreateMurmurDto } from './dto/create-murmur.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { MurmursService } from './murmurs.service';
 
+@ApiTags('murmurs')
 @Controller()
 export class MurmursController {
     constructor(private readonly murmursService: MurmursService) {}
