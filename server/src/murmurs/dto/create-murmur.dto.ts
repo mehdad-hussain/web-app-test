@@ -1,4 +1,6 @@
-import { createZodDto } from "../../auth/pipes/zod-validation.pipe";
-import { createMurmurSchema } from "../../db/schema/murmur.schema";
+import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateMurmurDto extends createZodDto(createMurmurSchema) {} 
+export class CreateMurmurDto {
+  @ApiProperty({ example: 'Hello world!', minLength: 1, maxLength: 280, description: 'Content of the murmur (1-280 chars)' })
+  content: string;
+} 

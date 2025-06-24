@@ -1,15 +1,17 @@
 import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Request, Res, UseGuards, UsePipes } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { AuthGuard } from "@nestjs/passport";
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Response } from "express";
-import { z } from "zod";
 import { AccessTokenGuard } from "../common/guards/accessToken.guard";
 import { RefreshTokenGuard } from "../common/guards/refreshToken.guard";
 import { insertUserSchema, loginUserSchema } from "../db/schema";
 import { env } from "../lib/env";
 import { UsersService } from "../users/users.service";
 import { AuthService } from "./auth.service";
+import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
+import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { ZodValidationPipe } from "./pipes/zod-validation.pipe";
 
 @ApiTags("auth")
@@ -25,7 +27,7 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(insertUserSchema))
   @ApiOperation({ summary: "Register a new user" })
   @ApiResponse({ status: 201, description: "User successfully created." })
-  async register(@Body() registerUserDto: z.infer<typeof insertUserSchema>) {
+  async register(@Body() registerUserDto: RegisterUserDto) {
     return this.usersService.create(registerUserDto);
   }
 
@@ -42,20 +44,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginUserSchema))
   @ApiOperation({ summary: "Logs the user in" })
-  @ApiBody({
-    schema: {
-      type: "object",
-      properties: {
-        email: { type: "string", example: "test@example.com" },
-        password: { type: "string", example: "password123" },
-      },
-    },
-  })
   @ApiResponse({
     status: 200,
     description: "Login successful, returns tokens.",
   })
-  async login(@Request() req, @Res({ passthrough: true }) response: Response) {
+  async login(@Body() loginUserDto: LoginUserDto, @Request() req, @Res({ passthrough: true }) response: Response) {
     const { accessToken, refreshToken, expires } = await this.authService.login(req.user, req);
 
     response.cookie("refresh_token", refreshToken, {
@@ -140,22 +133,13 @@ export class AuthController {
   @Post("sessions/revoke")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Revokes a specific session" })
-  @ApiBody({
-      schema: {
-        type: "object",
-        properties: {
-          sessionToken: { type: "string" },
-        },
-        required: ['sessionToken'],
-      },
-  })
   @ApiBearerAuth("jwt")
   @ApiResponse({ status: 200, description: "Session revoked successfully." })
-  async revokeSession(@Request() req, @Body('sessionToken') sessionToken: string) {
-      if (!sessionToken) {
+  async revokeSession(@Request() req, @Body() dto: RevokeSessionDto) {
+      if (!dto.sessionToken) {
           throw new BadRequestException('sessionToken is required.');
       }
-      await this.authService.revokeSession(req.user.sub, sessionToken);
+      await this.authService.revokeSession(req.user.sub, dto.sessionToken);
       return { message: "Session revoked successfully" };
   }
 }

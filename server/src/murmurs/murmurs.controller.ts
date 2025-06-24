@@ -1,6 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ZodValidationPipe } from '../auth/pipes/zod-validation.pipe';
 import { AccessTokenGuard } from '../common/guards/accessToken.guard';
+import { createMurmurSchema } from '../db/schema/murmur.schema';
 import { CreateMurmurDto } from './dto/create-murmur.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { MurmursService } from './murmurs.service';
@@ -25,6 +28,7 @@ export class MurmursController {
     }
     @UseGuards(AccessTokenGuard)
     @Get('me/timeline')
+    @ApiBearerAuth('jwt')
     async findTimeline(@CurrentUser() userId: string, @Query('page') page: string = '1', @Query('limit') limit: string = '10') {
         try {
             const parsedPage = parseInt(page, 10);
@@ -44,12 +48,17 @@ export class MurmursController {
 
     @UseGuards(AccessTokenGuard)
     @Post('me/murmurs')
-    async create(@CurrentUser() userId: string, @Body() createMurmurDto: CreateMurmurDto) {
+    @ApiBearerAuth('jwt')
+    async create(
+        @CurrentUser() userId: string,
+        @Body(new ZodValidationPipe(createMurmurSchema)) createMurmurDto: CreateMurmurDto
+    ) {
         return this.murmursService.create(userId, createMurmurDto);
     }
 
     @UseGuards(AccessTokenGuard)
     @Delete('me/murmurs/:id')
+    @ApiBearerAuth('jwt')
     async remove(@CurrentUser() userId: string, @Param('id') id: string) {
         await this.murmursService.remove(id, userId);
         return { success: true };
@@ -57,18 +66,21 @@ export class MurmursController {
 
     @UseGuards(AccessTokenGuard)
     @Post('murmurs/:id/like')
+    @ApiBearerAuth('jwt')
     async like(@CurrentUser() userId: string, @Param('id') id: string) {
         return this.murmursService.like(id, userId);
     }
 
     @UseGuards(AccessTokenGuard)
     @Delete('murmurs/:id/like')
+    @ApiBearerAuth('jwt')
     async unlike(@CurrentUser() userId: string, @Param('id') id: string) {
         return this.murmursService.unlike(id, userId);
     }
 
     @UseGuards(AccessTokenGuard)
     @Post('users/:id/follow')
+    @ApiBearerAuth('jwt')
     async follow(@CurrentUser() userId: string, @Param('id') followingId: string) {
         await this.murmursService.follow(followingId, userId);
         return { success: true };
@@ -76,6 +88,7 @@ export class MurmursController {
 
     @UseGuards(AccessTokenGuard)
     @Delete('users/:id/follow')
+    @ApiBearerAuth('jwt')
     async unfollow(@CurrentUser() userId: string, @Param('id') followingId: string) {
         await this.murmursService.unfollow(followingId, userId);
         return { success: true };
@@ -88,6 +101,7 @@ export class MurmursController {
 
     @UseGuards(AccessTokenGuard)
     @Get('users/:userId/is-following')
+    @ApiBearerAuth('jwt')
     async isFollowing(@CurrentUser() currentUserId: string, @Param('userId') userId: string) {
         return this.murmursService.isFollowing(currentUserId, userId);
     }
