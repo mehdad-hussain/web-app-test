@@ -34,20 +34,8 @@ export const useLogin = () => {
         '/'
       navigate(from, { replace: true })
     },
-    onError: (error) => {
-      const errorData = error.response?.data
-      if (errorData) {
-        if (typeof errorData.message === 'string') {
-          toast.error(errorData.message)
-        } else if (typeof errorData.message === 'object') {
-          const messages = Object.values(errorData.message).flat()
-          toast.error(messages.join('. '))
-        } else {
-          toast.error('An unknown error occurred.')
-        }
-      } else {
-        toast.error('An error occurred')
-      }
+    onError: () => {
+      // Do not show any toast here; api.ts interceptor already handles error toasts
     },
   })
 }

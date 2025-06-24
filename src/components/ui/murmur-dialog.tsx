@@ -13,9 +13,10 @@ import { useState } from "react";
 
 interface MurmurDialogProps {
   trigger?: React.ReactNode;
+  onSubmit: (content: string) => Promise<void>;
 }
 
-export function MurmurDialog({ trigger }: MurmurDialogProps) {
+export function MurmurDialog({ trigger, onSubmit }: MurmurDialogProps) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,10 +26,12 @@ export function MurmurDialog({ trigger }: MurmurDialogProps) {
 
     setIsSubmitting(true);
     try {
-      // TODO: Implement actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock API call
+      await onSubmit(text.trim());
       setText("");
       setOpen(false);
+    } catch (error) {
+      // Error handling is done by the API client
+      console.error('Failed to create murmur:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -56,6 +59,7 @@ export function MurmurDialog({ trigger }: MurmurDialogProps) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             className="min-h-[100px]"
+            maxLength={280}
           />
           <div className="flex justify-end text-sm text-gray-500">
             {text.length}/280 characters
@@ -71,7 +75,7 @@ export function MurmurDialog({ trigger }: MurmurDialogProps) {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!text.trim() || isSubmitting}
+            disabled={!text.trim() || isSubmitting || text.length > 280}
           >
             {isSubmitting ? "Posting..." : "Post Murmur"}
           </Button>

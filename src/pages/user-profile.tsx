@@ -1,39 +1,34 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FollowButton } from "@/components/ui/follow-button";
 import { MurmurCard } from "@/components/ui/murmur-card";
 import { useCurrentSession } from "@/hooks/use-current-session";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import type { PaginatedResponse } from "@/lib/api";
+import { getFollowCounts, getUserMurmurs } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-
-// Mock data for development
-const MOCK_USER = {
-  id: "user-1",
-  name: "John Doe",
-  followersCount: 1234,
-  followingCount: 567,
-};
-
-const MOCK_USER_MURMURS = Array.from({ length: 10 }, (_, i) => ({
-  id: `murmur-${i + 1}`,
-  text: `This is a mock murmur ${i + 1} from ${MOCK_USER.name} with some example content.`,
-  authorId: MOCK_USER.id,
-  authorName: MOCK_USER.name,
-  likeCount: Math.floor(Math.random() * 100),
-  createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-}));
 
 export default function UserProfilePage() {
   const { id } = useParams();
   const { data: session } = useCurrentSession();
-  const user = MOCK_USER; // In real app, fetch based on id
-  const murmurs = MOCK_USER_MURMURS;
+  const userId = id!;
+
+  // Fetch murmurs for this user
+  const { data: murmursData, isLoading: isLoadingMurmurs } = useQuery<PaginatedResponse>({
+    queryKey: ["user-murmurs", userId],
+    queryFn: () => getUserMurmurs(userId),
+  });  // Fetch follow counts
+  const { data: followCounts } = useQuery({
+    queryKey: ["user-follow-counts", userId],
+    queryFn: () => getFollowCounts(userId),
+  });
 
   // Check if this is the current user's profile
-  const isOwnProfile = session?.id === user.id;
+  const isOwnProfile = session?.currentSession?.userId === userId;
 
-  const handleFollow = () => {
-    // TODO: Implement follow functionality
-  };
+  // Use first murmur's author as fallback for user info
+  const user = murmursData?.murmurs[0]?.author || { name: "", id: userId };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
@@ -58,17 +53,12 @@ export default function UserProfilePage() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 {user.name}
-              </h2>
-              <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <span>{user.followersCount} followers</span>
-                <span>{user.followingCount} following</span>
+              </h2>              <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                <span>{followCounts?.followersCount ?? 0} followers</span>
+                <span>{followCounts?.followingCount ?? 0} following</span>
               </div>
-            </div>
-            {!isOwnProfile && (
-              <Button onClick={handleFollow}>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Follow
-              </Button>
+            </div>            {!isOwnProfile && (
+              <FollowButton userId={userId} />
             )}
           </div>
         </Card>
@@ -78,15 +68,26 @@ export default function UserProfilePage() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Murmurs
           </h3>
-          {murmurs.map((murmur) => (
-            <MurmurCard
-              key={murmur.id}
-              {...murmur}
-              isOwnMurmur={false} // Never show delete button on other user's profile
-            />
-          ))}
+          {isLoadingMurmurs ? (
+            <div>Loading...</div>
+          ) : (
+            murmursData?.murmurs.map((murmur) => (
+              <MurmurCard
+                key={murmur.id}
+                id={murmur.id}
+                text={murmur.content}
+                authorId={murmur.author.id}
+                authorName={murmur.author.name || ""}
+                authorImage={murmur.author.image}
+                likeCount={murmur.likeCount}
+                createdAt={murmur.createdAt}
+                isOwnMurmur={false}
+                isLiked={murmur.isLiked}
+              />
+            ))
+          )}
         </div>
       </main>
     </div>
   );
-} 
+}
